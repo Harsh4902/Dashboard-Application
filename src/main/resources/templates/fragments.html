@@ -1,0 +1,16 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      lang="en">
+
+
+<li class="clearfix" th:fragment="meassageItem(item)" >
+    <div class="message" th:classappend="${item.isReceived?'other-message float-right':'my-message'}" th:text="${item.message}">Are we meeting today?</div>
+</li>
+
+<li class="clearfix" th:fragment="chatItem(chat)" >
+    <div class="name" th:text="${chat.heading}">Hello Chat</div>
+</li>
+
+</html>
+
+
