@@ -1,8 +1,10 @@
 package com.example.dashboard;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,13 +13,11 @@ import java.util.List;
 @RequestMapping("/")
 public class Controller {
 
+  @Autowired
+  private WebClient webClient;
   public List<MessageItem> messages = new ArrayList<>();
-  public void addMessages(){
-    messages.add(new MessageItem("Hello, How are you?",false));
-    messages.add(new MessageItem("Hey, I am fine dude. What's about you?",true));
-    messages.add(new MessageItem("I am good. Tell me when are you comming?",false));
-    messages.add(new MessageItem("I am waiting for you.",false));
-  }
+
+  private String Url = "http://localhost:8003/v1/wiki/summary?query=";
   @GetMapping
   public String mainPage(Model model){
     addChat();
@@ -70,7 +70,13 @@ public class Controller {
   @GetMapping("/responce")
   public String reply(Model model){
 
-    MessageItem messageItem = new MessageItem("Hello from AI", true);
+      WikiResponse wikiResponse = webClient.get()
+              .uri(Url + messages.get(messages.size()-1).getMessage())
+              .retrieve()
+              .bodyToMono(WikiResponse.class)
+              .block();
+
+    MessageItem messageItem = new MessageItem(wikiResponse.getResponse(), true);
     model.addAttribute("item", messageItem);
     messages.add(messageItem);
 
