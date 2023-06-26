@@ -130,6 +130,11 @@ body{
     position: relative
 }
 
+.chat-history{
+    overflow-x: auto;
+    height: 550px;
+}
+
 .chat .chat-history .message:after {
     bottom: 100%;
     left: 7%;
@@ -164,7 +169,7 @@ body{
 
 .chat .chat-history .other-message {
     background: #e8f1f3;
-    text-align: right
+    text-align: left;
 }
 
 .chat .chat-history .other-message:after {

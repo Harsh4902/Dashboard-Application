@@ -2,10 +2,15 @@ package com.example.dashboard;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,11 +18,13 @@ import java.util.List;
 @RequestMapping("/")
 public class Controller {
 
+  private StringBuilder currentContent;
+
   @Autowired
   private WebClient webClient;
   public List<MessageItem> messages = new ArrayList<>();
 
-  private String Url = "http://localhost:8003/v1/wiki/summary?query=";
+  private String Url = "http://localhost:8003/v1/sse/wiki/summary?query=";
   @GetMapping
   public String mainPage(Model model){
     addChat();
@@ -25,14 +32,10 @@ public class Controller {
     return "index";
   }
 
-//  @GetMapping("{message}")
-//  public String newMessage(@PathVariable("message") String message){
-//    messages.add(new MessageItem(message,false));
-//    return "index";
-//  }
-
   @GetMapping("main.css")
   public String addCSS(){
+
+    System.out.println("css");
     return "main.css";
   }
 
@@ -60,6 +63,7 @@ public class Controller {
 
 
   private void addAttributeForIndex(Model model){
+    System.out.println("Add Attribute For Index");
     model.addAttribute("item", new MessageItem());
     model.addAttribute("messages",messages);
     model.addAttribute("chats",chats);
@@ -69,28 +73,40 @@ public class Controller {
 
   @GetMapping("/responce")
   public String reply(Model model){
-
-      WikiResponse wikiResponse = webClient.get()
-              .uri(Url + messages.get(messages.size()-1).getMessage())
-              .retrieve()
-              .bodyToMono(WikiResponse.class)
-              .block();
-
-    MessageItem messageItem = new MessageItem(wikiResponse.getResponse(), true);
+    System.out.println("reply");
+    currentContent = new StringBuilder("");
+    MessageItem messageItem = new MessageItem("", true);
     model.addAttribute("item", messageItem);
-    messages.add(messageItem);
+//    messages.add(messageItem);
 
     return "fragments :: meassageItem";
   }
 
-  public void addMes(){
-    int id = 3;
-    Chat currentChat = chats.get(id-1);
-    List<MessageItem> ms = currentChat.chatHistory;
+  @GetMapping(value = "/sse")
+  public Flux sseMethod(){
 
-    ms.add(new MessageItem("Hello",false));
+//    Flux<ServerSentEvent<WikiResponse>> eventStream = webClient.get()
+//            .uri(Url + messages.get(messages.size()-1).getMessage())
+//            .retrieve()
+//            .bodyToFlux(type);
 
+    return webClient.get()
+            .uri(Url + messages.get(messages.size()-1).getMessage())
+            .retrieve()
+            .bodyToFlux(WikiResponse.class)
+            .delayElements(Duration.ofMillis(100))
+            .filter(it -> !it.getResponse().equals("OpenAI Chat Completion Finished"))
+            .map(it -> currentContent.append(it.getResponse()));
+
+//      eventStream.subscribe(
+//            content -> {
+//
+//            },
+//            error -> {},
+//            () -> {}
+//    );
   }
+
 
   public void addChat(){
     chats.add(new Chat("Chat 1",new ArrayList<MessageItem>()));
@@ -100,4 +116,15 @@ public class Controller {
   }
 
   public List<Chat> chats = new ArrayList<>();
+
+
+  //  public void addMes(){
+//    int id = 3;
+//    Chat currentChat = chats.get(id-1);
+//    List<MessageItem> ms = currentChat.chatHistory;
+//
+//    ms.add(new MessageItem("Hello",false));
+//
+//}
+
 }
