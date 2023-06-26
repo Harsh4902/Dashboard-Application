@@ -4,7 +4,13 @@
 
 
 <li class="clearfix" th:fragment="meassageItem(item)" >
-    <div class="message" th:classappend="${item.isReceived?'other-message float-right':'my-message'}" th:text="${item.message}">Are we meeting today?</div>
+    <div class="message"
+         th:classappend="${item.isReceived?'other-message float-right':'my-message'}"
+         hx-ext="sse" th:attrappend="sse-connect=${item.isReceived}? '/sse':'3'">
+        <div th:text="${item.message}" sse-swap="message">
+            Are we meeting today?
+        </div>
+    </div>
 </li>
 
 <li class="clearfix" th:fragment="chatItem(chat)" >
